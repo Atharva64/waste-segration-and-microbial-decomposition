@@ -1,0 +1,7 @@
+class,total,train,validation,test
+biodegradable,1112,778,166,168
+plastic,1644,1150,246,248
+paper,1713,1199,256,258
+glass,1278,894,191,193
+metal,1539,1077,230,232
+e-waste,1561,1092,234,235
