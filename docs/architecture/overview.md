@@ -114,3 +114,4 @@ Example:
   "prediction": "Plastic",
   "confidence": 96.47
 }
+```
