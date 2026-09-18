@@ -1,3 +1,4 @@
+from pathlib import Path
 import tensorflow as tf
 from tensorflow.keras import layers, Model
 
@@ -14,10 +15,90 @@ INPUT_SHAPE = (224, 224, 3)
 LEARNING_RATE = 0.001
 DROPOUT_RATE = 0.2
 
+EPOCHS = 15
+
+MODEL_DIR = Path("ai/models")
+LOG_DIR = Path("docs/report")
+
+BEST_MODEL_PATH = MODEL_DIR / "waste_classifier_best.keras"
+FINAL_MODEL_PATH = MODEL_DIR / "waste_classifier_final.keras"
+HISTORY_PATH = LOG_DIR / "training_history.csv"
+
 
 # ============================================================
 # Build MobileNetV3Small Transfer Learning Model
 # ============================================================
+
+def create_callbacks(): 
+    """
+    Create callbacks for checkpointing and early stopping.
+    """
+
+    MODEL_DIR.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    LOG_DIR.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    callbacks = [
+        tf.keras.callbacks.ModelCheckpoint(
+            filepath=BEST_MODEL_PATH,
+            monitor="val_accuracy",
+            save_best_only=True,
+            mode="max",
+            verbose=1
+        ),
+
+        tf.keras.callbacks.EarlyStopping(
+            monitor="val_loss",
+            patience=4,
+            restore_best_weights=True,
+            verbose=1
+        ),
+
+        tf.keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss",
+            factor=0.5,
+            patience=2,
+            min_lr=1e-6,
+            verbose=1
+        ),
+
+        tf.keras.callbacks.CSVLogger(
+            HISTORY_PATH
+        )
+    ]
+
+    return callbacks
+
+def train_model(
+    model,
+    train_dataset,
+    validation_dataset
+):
+    """
+    Train the classification head while MobileNetV3Small
+    remains frozen.
+    """
+
+    print("\n" + "=" * 70)
+    print("STARTING MODEL TRAINING")
+    print("=" * 70)
+
+    callbacks = create_callbacks()
+
+    history = model.fit(
+        train_dataset,
+        validation_data=validation_dataset,
+        epochs=EPOCHS,
+        callbacks=callbacks
+    )
+
+    return history
 
 def build_model(num_classes):
     """
@@ -249,16 +330,11 @@ def test_model(
 def main():
 
     print("\n" + "=" * 70)
-
-    print(
-        "AI-BASED WASTE SEGREGATION "
-        "CLASSIFICATION SYSTEM"
-    )
-
+    print("AI-BASED WASTE SEGREGATION CLASSIFICATION SYSTEM")
     print("=" * 70)
 
     # --------------------------------------------------------
-    # Load preprocessed datasets
+    # 1. Load datasets
     # --------------------------------------------------------
 
     (
@@ -269,7 +345,7 @@ def main():
     ) = create_datasets()
 
     # --------------------------------------------------------
-    # Build model
+    # 2. Build MobileNetV3Small model
     # --------------------------------------------------------
 
     model, base_model = build_model(
@@ -277,7 +353,7 @@ def main():
     )
 
     # --------------------------------------------------------
-    # Compile model
+    # 3. Compile model
     # --------------------------------------------------------
 
     model = compile_model(
@@ -285,7 +361,7 @@ def main():
     )
 
     # --------------------------------------------------------
-    # Display architecture
+    # 4. Display model information
     # --------------------------------------------------------
 
     display_model_info(
@@ -295,7 +371,7 @@ def main():
     )
 
     # --------------------------------------------------------
-    # Verify model
+    # 5. Test forward pass
     # --------------------------------------------------------
 
     test_model(
@@ -303,15 +379,57 @@ def main():
         train_dataset
     )
 
+    # --------------------------------------------------------
+    # 6. Train model
+    # --------------------------------------------------------
+
+    history = train_model(
+        model,
+        train_dataset,
+        validation_dataset
+    )
+
+    # --------------------------------------------------------
+    # 7. Create model folder
+    # --------------------------------------------------------
+
+    MODEL_DIR.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    # --------------------------------------------------------
+    # 8. Save final trained model
+    # --------------------------------------------------------
+
+    model.save(
+        FINAL_MODEL_PATH
+    )
+
+    # --------------------------------------------------------
+    # 9. Print saved file locations
+    # --------------------------------------------------------
+
     print("\n" + "=" * 70)
-    print("MOBILENETV3SMALL MODEL READY")
+    print("TRAINING COMPLETED")
     print("=" * 70)
 
     print(
-        "\nThe base model is frozen."
-        "\nThe new classification head is trainable."
-        "\nFull model training will be performed next."
+        f"\nFinal model saved to:\n"
+        f"{FINAL_MODEL_PATH}"
     )
+
+    print(
+        f"\nBest checkpoint saved to:\n"
+        f"{BEST_MODEL_PATH}"
+    )
+
+    print(
+        f"\nTraining history saved to:\n"
+        f"{HISTORY_PATH}"
+    )
+
+    print("\nModel training successfully completed.")
 
 
 if __name__ == "__main__":
