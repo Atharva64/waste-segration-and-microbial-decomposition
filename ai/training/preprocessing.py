@@ -1,4 +1,5 @@
 from pathlib import Path
+from augmentation import apply_augmentation
 import tensorflow as tf
 
 
@@ -168,15 +169,15 @@ def create_datasets():
     train_dataset = optimize_dataset(
         train_dataset,
         training=True
-    )
+    ) 
+    train_dataset = apply_augmentation(train_dataset)
 
     validation_dataset = optimize_dataset(
-        validation_dataset
-    )
+        validation_dataset)
 
     test_dataset = optimize_dataset(
-        test_dataset
-    )
+        test_dataset)
+    
 
     return (
         train_dataset,
