@@ -141,6 +141,20 @@ This will allow comparison of accuracy, F1-score, inference speed, and model siz
 
 ---
 
+## 📊 Model Performance
+
+### Training and Validation Accuracy
+
+![Training Accuracy](docs/screenshots/training_accuracy.png)
+
+### Training and Validation Loss
+
+![Training Loss](docs/screenshots/training_loss.png)
+
+### Confusion Matrix
+
+![Confusion Matrix](docs/screenshots/confusion_matrix.png)
+
 ## 🧪 Model Evaluation
 
 The AI model will be evaluated using:
