@@ -1,9 +1,15 @@
 from pathlib import Path
+
 import argparse
 import json
 
 import numpy as np
 import tensorflow as tf
+
+from decomposition_lookup import (
+    lookup_decomposition,
+    display_lookup_result
+)
 
 
 # ============================================================
@@ -67,7 +73,8 @@ def load_trained_model():
     )
 
     model = tf.keras.models.load_model(
-        MODEL_PATH
+        MODEL_PATH,
+        compile=False
     )
 
     print("Model loaded successfully.")
@@ -117,9 +124,9 @@ def preprocess_image(image_path):
         image_array / 127.5
     ) - 1.0
 
-    # Add batch dimension
+    # Add batch dimension:
     # (224, 224, 3)
-    # becomes
+    # ->
     # (1, 224, 224, 3)
     image_array = tf.expand_dims(
         image_array,
@@ -175,7 +182,7 @@ def predict_image(
 
 
 # ============================================================
-# Display Result
+# Display Classification Result
 # ============================================================
 
 def display_prediction(
@@ -191,7 +198,8 @@ def display_prediction(
     print("=" * 60)
 
     print(
-        f"\nImage:\n{image_path}"
+        f"\nImage:\n"
+        f"{image_path}"
     )
 
     print(
@@ -210,6 +218,7 @@ def display_prediction(
         class_names,
         probabilities
     ):
+
         print(
             f"{class_name:<15} "
             f"{probability * 100:>7.2f}%"
@@ -226,21 +235,58 @@ def main():
 
     parser = argparse.ArgumentParser(
         description=(
-            "Predict the waste category "
-            "of a single image."
+            "Predict waste category and retrieve "
+            "microbial decomposition information."
         )
     )
 
+    # Image path
     parser.add_argument(
         "image",
         help="Path to the waste image"
     )
 
+    # Optional biodegradable subtype
+    parser.add_argument(
+        "--subtype",
+        choices=[
+            "food_kitchen",
+            "fruit_vegetable",
+            "yard_green",
+            "plant_crop_residues"
+        ],
+        default=None,
+        help=(
+            "Biodegradable waste subtype used for "
+            "microbial decomposition lookup."
+        )
+    )
+
     args = parser.parse_args()
+
+    # --------------------------------------------------------
+    # Load classes
+    # --------------------------------------------------------
 
     class_names = load_class_names()
 
+    # --------------------------------------------------------
+    # Load model
+    # --------------------------------------------------------
+
     model = load_trained_model()
+
+    # Safety check
+    if model.output_shape[-1] != len(class_names):
+
+        raise ValueError(
+            "Model output size does not match "
+            "class_names.json."
+        )
+
+    # --------------------------------------------------------
+    # Predict image
+    # --------------------------------------------------------
 
     (
         predicted_class,
@@ -252,12 +298,29 @@ def main():
         class_names
     )
 
+    # --------------------------------------------------------
+    # Display classification
+    # --------------------------------------------------------
+
     display_prediction(
         args.image,
         predicted_class,
         confidence,
         probabilities,
         class_names
+    )
+
+    # --------------------------------------------------------
+    # Decomposition Knowledge Lookup
+    # --------------------------------------------------------
+
+    lookup_result = lookup_decomposition(
+        predicted_class,
+        subtype=args.subtype
+    )
+
+    display_lookup_result(
+        lookup_result
     )
 
 
