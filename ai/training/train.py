@@ -1,8 +1,10 @@
+import json
 from pathlib import Path
 import tensorflow as tf
 from tensorflow.keras import layers, Model
 
 from preprocessing import create_datasets
+
 
 
 # ============================================================
@@ -23,6 +25,7 @@ LOG_DIR = Path("docs/report")
 BEST_MODEL_PATH = MODEL_DIR / "waste_classifier_best.keras"
 FINAL_MODEL_PATH = MODEL_DIR / "waste_classifier_final.keras"
 HISTORY_PATH = LOG_DIR / "training_history.csv"
+CLASS_NAMES_PATH = MODEL_DIR / "class_names.json"
 
 
 # ============================================================
@@ -345,6 +348,31 @@ def main():
     ) = create_datasets()
 
     # --------------------------------------------------------
+    # Save class names for inference
+    # --------------------------------------------------------
+
+    MODEL_DIR.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    with open(
+        CLASS_NAMES_PATH,
+        "w",
+        encoding="utf-8"
+    ) as file:
+        json.dump(
+            class_names,
+            file,
+            indent=4
+        )
+
+    print(
+        f"\nClass names saved to:\n"
+        f"{CLASS_NAMES_PATH}"
+    )
+
+    # --------------------------------------------------------
     # 2. Build MobileNetV3Small model
     # --------------------------------------------------------
 
@@ -390,7 +418,7 @@ def main():
     )
 
     # --------------------------------------------------------
-    # 7. Create model folder
+    # 7. Save final trained model
     # --------------------------------------------------------
 
     MODEL_DIR.mkdir(
@@ -398,16 +426,12 @@ def main():
         exist_ok=True
     )
 
-    # --------------------------------------------------------
-    # 8. Save final trained model
-    # --------------------------------------------------------
-
     model.save(
         FINAL_MODEL_PATH
     )
 
     # --------------------------------------------------------
-    # 9. Print saved file locations
+    # 8. Print saved file locations
     # --------------------------------------------------------
 
     print("\n" + "=" * 70)
@@ -427,6 +451,11 @@ def main():
     print(
         f"\nTraining history saved to:\n"
         f"{HISTORY_PATH}"
+    )
+
+    print(
+        f"\nClass names saved to:\n"
+        f"{CLASS_NAMES_PATH}"
     )
 
     print("\nModel training successfully completed.")
