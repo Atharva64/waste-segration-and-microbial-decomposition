@@ -171,6 +171,20 @@ The AI model will be evaluated using:
 
 ---
 
+## 🧠 Model Comparison
+
+Two transfer-learning architectures were evaluated:
+
+- MobileNetV3Small
+- EfficientNetV2B0
+
+The models were compared using accuracy, precision, recall, F1-score,
+inference speed, and model size.
+
+See the complete comparison:
+
+[MobileNetV3Small vs EfficientNetV2B0](docs/report/model_comparison.md)
+
 ## 🛠️ Technology Stack
 
 > Target development stack verified for **18 September 2026**.  
