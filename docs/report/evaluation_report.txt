@@ -1,0 +1,23 @@
+AI-Based Waste Segregation
+Model Evaluation Report
+======================================================================
+
+Accuracy  : 76.99%
+Precision : 77.45%
+Recall    : 76.99%
+F1 Score  : 76.77%
+
+Per-Class Classification Report
+======================================================================
+               precision    recall  f1-score   support
+
+biodegradable     0.8608    0.8095    0.8344       168
+      e-waste     0.8286    0.8638    0.8458       235
+        glass     0.8171    0.6943    0.7507       193
+        metal     0.7137    0.7845    0.7474       232
+        paper     0.7057    0.8643    0.7770       258
+      plastic     0.7602    0.6008    0.6712       248
+
+     accuracy                         0.7699      1334
+    macro avg     0.7810    0.7695    0.7711      1334
+ weighted avg     0.7745    0.7699    0.7677      1334
