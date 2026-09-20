@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom'
 
 import Navbar from './components/Navbar'
+import Analytics from './pages/Analytics'
 import DecompositionInfo from './pages/DecompositionInfo'
 import Predict from './pages/Predict'
 import WasteGuide from './pages/WasteGuide'
@@ -34,6 +35,11 @@ function App() {
         <Route
           path="/decomposition"
           element={<DecompositionInfo />}
+        />
+
+        <Route
+          path="/analytics"
+          element={<Analytics />}
         />
 
         <Route
