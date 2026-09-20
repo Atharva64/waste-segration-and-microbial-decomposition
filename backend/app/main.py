@@ -3,6 +3,9 @@ from fastapi import FastAPI
 from backend.app.api.predict import (
     router as predict_router,
 )
+from backend.app.api.waste import (
+    router as waste_router,
+)
 
 
 # ============================================================
@@ -29,6 +32,10 @@ app = FastAPI(
 
 app.include_router(
     predict_router
+)
+
+app.include_router(
+    waste_router
 )
 
 
