@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ImageUpload from '../components/ImageUpload'
 import WebcamCapture from '../components/WebcamCapture'
+import Results from './Results'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
@@ -15,6 +16,7 @@ function Predict() {
   const [previewUrl, setPreviewUrl] = useState('')
   const [error, setError] = useState('')
   const [inputMode, setInputMode] = useState('upload')
+  const [result, setResult] = useState(null)
 
   useEffect(() => {
     if (!selectedFile) {
@@ -30,6 +32,7 @@ function Predict() {
 
   const handleFileSelect = (file) => {
     setError('')
+    setResult(null)
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
       setSelectedFile(null)
@@ -57,7 +60,29 @@ function Predict() {
 
   const handleRemove = () => {
     setSelectedFile(null)
+    setResult(null)
     setError('')
+  }
+
+  const handleAnalyze = () => {
+    /*
+      Day 28 is the results-page UI.
+
+      The real FastAPI request will replace this temporary
+      demonstration result in the API-integration step.
+    */
+    setResult({
+      predicted_class: 'biodegradable',
+      confidence: 0.93,
+      model_name: 'MobileNetV3Small',
+    })
+  }
+
+  const handleTryAnother = () => {
+    setSelectedFile(null)
+    setResult(null)
+    setError('')
+    setInputMode('upload')
   }
 
   return (
@@ -81,104 +106,86 @@ function Predict() {
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-14">
-        <div className="text-center">
-          <span className="inline-flex rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-700">
-            Step 1 · Select Image
-          </span>
+        {result ? (
+          <Results
+            result={result}
+            previewUrl={previewUrl}
+            onTryAnother={handleTryAnother}
+          />
+        ) : (
+          <>
+            <div className="text-center">
+              <span className="inline-flex rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-700">
+                Step 1 · Select Image
+              </span>
 
-          <h2 className="mt-5 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
-            Identify your waste
-          </h2>
+              <h2 className="mt-5 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
+                Identify your waste
+              </h2>
 
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600">
-            Upload an existing photo or capture one directly using
-            your webcam.
-          </p>
-        </div>
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600">
+                Upload an existing photo or capture one directly using
+                your webcam.
+              </p>
+            </div>
 
-        <div className="mt-8 grid grid-cols-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
-          <button
-            type="button"
-            onClick={() => setInputMode('upload')}
-            className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
-              inputMode === 'upload'
-                ? 'bg-green-600 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            Upload Image
-          </button>
+            <div className="mt-8 grid grid-cols-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setInputMode('upload')}
+                className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
+                  inputMode === 'upload'
+                    ? 'bg-green-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                Upload Image
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setInputMode('camera')}
-            className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
-              inputMode === 'camera'
-                ? 'bg-green-600 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            Use Webcam
-          </button>
-        </div>
+              <button
+                type="button"
+                onClick={() => setInputMode('camera')}
+                className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
+                  inputMode === 'camera'
+                    ? 'bg-green-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                Use Webcam
+              </button>
+            </div>
 
-        <div className="mt-6">
-          {inputMode === 'upload' ? (
-            <ImageUpload
-              file={selectedFile}
-              previewUrl={previewUrl}
-              error={error}
-              onFileSelect={handleFileSelect}
-              onRemove={handleRemove}
-            />
-          ) : (
-            <WebcamCapture
-              onCapture={handleWebcamCapture}
-              onClose={() => setInputMode('upload')}
-            />
-          )}
-        </div>
+            <div className="mt-6">
+              {inputMode === 'upload' ? (
+                <ImageUpload
+                  file={selectedFile}
+                  previewUrl={previewUrl}
+                  error={error}
+                  onFileSelect={handleFileSelect}
+                  onRemove={handleRemove}
+                />
+              ) : (
+                <WebcamCapture
+                  onCapture={handleWebcamCapture}
+                  onClose={() => setInputMode('upload')}
+                />
+              )}
+            </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <p className="text-sm font-bold text-slate-900">
-              Good lighting
+            <button
+              type="button"
+              disabled={!selectedFile}
+              onClick={handleAnalyze}
+              className="mt-8 w-full rounded-2xl bg-green-600 px-6 py-4 text-base font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              Analyze Waste
+            </button>
+
+            <p className="mt-3 text-center text-xs text-slate-400">
+              Day 28 uses a temporary result only to test the results UI.
             </p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              Use a bright image so the object is clearly visible.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <p className="text-sm font-bold text-slate-900">
-              One main item
-            </p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              Keep the waste object centered and avoid a cluttered scene.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <p className="text-sm font-bold text-slate-900">
-              Upload or capture
-            </p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              Use a saved image or capture one directly with your webcam.
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          disabled={!selectedFile}
-          className="mt-8 w-full rounded-2xl bg-green-600 px-6 py-4 text-base font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
-          Analyze Waste
-        </button>
-
-        <p className="mt-3 text-center text-xs text-slate-400">
-          The prediction API will be connected in the next integration step.
-        </p>
+          </>
+        )}
       </main>
     </div>
   )
