@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 
+from backend.app.api.history import (
+    router as history_router,
+)
 from backend.app.api.predict import (
     router as predict_router,
 )
@@ -36,6 +39,10 @@ app.include_router(
 
 app.include_router(
     waste_router
+)
+
+app.include_router(
+    history_router
 )
 
 

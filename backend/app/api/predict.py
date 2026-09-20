@@ -1,13 +1,19 @@
 from fastapi import (
     APIRouter,
+    Depends,
     File,
     HTTPException,
     UploadFile,
     status,
 )
+from sqlalchemy.orm import Session
 
+from backend.app.database.session import get_db
 from backend.app.schemas.prediction import (
     PredictionResponse,
+)
+from backend.app.services.history_service import (
+    save_prediction,
 )
 from backend.app.services.prediction_service import (
     predict_image_bytes,
@@ -37,9 +43,11 @@ MAX_FILE_SIZE = 10 * 1024 * 1024
 )
 async def predict_waste(
     image: UploadFile = File(...),
+    db: Session = Depends(get_db),
 ):
     """
-    Upload one waste image and return the model prediction.
+    Upload one waste image, run the trained model,
+    save the result, and return prediction JSON.
     """
 
     if image.content_type not in ALLOWED_CONTENT_TYPES:
@@ -70,7 +78,22 @@ async def predict_waste(
             image_bytes
         )
 
+        prediction = save_prediction(
+            db,
+            filename=(
+                image.filename
+                or "uploaded-image"
+            ),
+            prediction_result=result,
+        )
+
     except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
+
+    except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(exc),
@@ -83,6 +106,10 @@ async def predict_waste(
         ) from exc
 
     return PredictionResponse(
-        filename=image.filename or "uploaded-image",
+        prediction_id=prediction.id,
+        filename=(
+            image.filename
+            or "uploaded-image"
+        ),
         **result,
     )
