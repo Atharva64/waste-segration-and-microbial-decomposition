@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 
+from backend.app.api.predict import (
+    router as predict_router,
+)
+
 
 # ============================================================
 # FastAPI Application
@@ -15,7 +19,16 @@ app = FastAPI(
         "and evidence-backed microbial decomposition "
         "recommendations."
     ),
-    version="0.1.0"
+    version="0.1.0",
+)
+
+
+# ============================================================
+# Routers
+# ============================================================
+
+app.include_router(
+    predict_router
 )
 
 
@@ -25,15 +38,11 @@ app = FastAPI(
 
 @app.get(
     "/health",
-    tags=["Health"]
+    tags=["Health"],
 )
 def health_check():
-    """
-    Check whether the backend API is running.
-    """
-
     return {
         "status": "ok",
         "service": "waste-segregation-api",
-        "version": "0.1.0"
+        "version": "0.1.0",
     }

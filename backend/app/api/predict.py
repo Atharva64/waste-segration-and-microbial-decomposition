@@ -1,0 +1,88 @@
+from fastapi import (
+    APIRouter,
+    File,
+    HTTPException,
+    UploadFile,
+    status,
+)
+
+from backend.app.schemas.prediction import (
+    PredictionResponse,
+)
+from backend.app.services.prediction_service import (
+    predict_image_bytes,
+)
+
+
+router = APIRouter(
+    prefix="/api",
+    tags=["Prediction"],
+)
+
+
+ALLOWED_CONTENT_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/bmp",
+}
+
+MAX_FILE_SIZE = 10 * 1024 * 1024
+
+
+@router.post(
+    "/predict",
+    response_model=PredictionResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def predict_waste(
+    image: UploadFile = File(...),
+):
+    """
+    Upload one waste image and return the model prediction.
+    """
+
+    if image.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=(
+                "Unsupported image type. "
+                "Use JPEG, PNG, WEBP, or BMP."
+            ),
+        )
+
+    image_bytes = await image.read()
+
+    if not image_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded image is empty.",
+        )
+
+    if len(image_bytes) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Image must be 10 MB or smaller.",
+        )
+
+    try:
+        result = predict_image_bytes(
+            image_bytes
+        )
+
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    return PredictionResponse(
+        filename=image.filename or "uploaded-image",
+        **result,
+    )
