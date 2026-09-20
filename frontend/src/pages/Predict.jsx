@@ -4,12 +4,7 @@ import WebcamCapture from '../components/WebcamCapture'
 import Results from './Results'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
-
-const ACCEPTED_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 function Predict() {
   const [selectedFile, setSelectedFile] = useState(null)
@@ -36,17 +31,13 @@ function Predict() {
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
       setSelectedFile(null)
-      setError(
-        'Please upload a JPG, PNG, or WEBP image.'
-      )
+      setError('Please upload a JPG, PNG, or WEBP image.')
       return
     }
 
     if (file.size > MAX_FILE_SIZE) {
       setSelectedFile(null)
-      setError(
-        'The selected image must be 10 MB or smaller.'
-      )
+      setError('The selected image must be 10 MB or smaller.')
       return
     }
 
@@ -65,12 +56,6 @@ function Predict() {
   }
 
   const handleAnalyze = () => {
-    /*
-      Day 28 is the results-page UI.
-
-      The real FastAPI request will replace this temporary
-      demonstration result in the API-integration step.
-    */
     setResult({
       predicted_class: 'biodegradable',
       confidence: 0.93,
@@ -86,26 +71,8 @@ function Predict() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-green-700">
-              WasteAI
-            </h1>
-
-            <p className="text-xs font-medium text-slate-500">
-              AI Waste Segregation System
-            </p>
-          </div>
-
-          <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
-            Image Classification
-          </span>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-4xl px-6 py-14">
+    <main className="min-h-[calc(100vh-82px)] bg-slate-50">
+      <div className="mx-auto max-w-4xl px-6 py-14">
         {result ? (
           <Results
             result={result}
@@ -182,12 +149,12 @@ function Predict() {
             </button>
 
             <p className="mt-3 text-center text-xs text-slate-400">
-              Day 28 uses a temporary result only to test the results UI.
+              The result is still temporary until the frontend API integration step.
             </p>
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </main>
   )
 }
 
