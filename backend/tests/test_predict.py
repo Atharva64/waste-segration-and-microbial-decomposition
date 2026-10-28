@@ -78,3 +78,37 @@ def test_predict_returns_prediction_json(
     assert data["predicted_class"] == "plastic"
     assert data["confidence"] == 0.91
     assert data["model_name"] == "MobileNetV3Small"
+
+
+def test_predict_returns_503_when_model_file_is_missing(
+    client,
+    monkeypatch,
+):
+    def missing_model(image_bytes):
+        raise FileNotFoundError(
+            "/secret/server/path/waste_classifier_best.keras"
+        )
+
+    monkeypatch.setattr(
+        predict_api,
+        "predict_image_bytes",
+        missing_model,
+    )
+
+    response = client.post(
+        "/api/predict",
+        files={
+            "image": (
+                "plastic.jpg",
+                b"fake-image-bytes",
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 503
+
+    message = response.json()["error"]["message"]
+
+    assert "ai/models" in message
+    assert "/secret/server/path" not in message

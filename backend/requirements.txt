@@ -1,0 +1,14 @@
+# Backend + inference dependencies (versions follow the project README).
+# Training/evaluation scripts additionally use:
+#   opencv-python, scikit-learn, pandas, matplotlib  (see README step 3)
+
+fastapi==0.141.1
+uvicorn==0.53.0
+python-multipart>=0.0.20   # required by FastAPI for file uploads (POST /api/predict)
+sqlalchemy==2.0.54
+psycopg[binary]==3.3.5
+python-dotenv>=1.0.0
+
+tensorflow==2.21.0
+numpy>=2.0
+pillow>=10.0

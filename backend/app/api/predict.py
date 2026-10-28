@@ -88,9 +88,14 @@ async def predict_waste(
         )
 
     except FileNotFoundError as exc:
+        # Do not expose server file-system paths to API clients.
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "The AI model is not available on the server. "
+                "Place waste_classifier_best.keras in ai/models/ "
+                "and restart the API."
+            ),
         ) from exc
 
     except RuntimeError as exc:

@@ -5,6 +5,7 @@ import {
   Routes,
 } from 'react-router-dom'
 
+import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import Analytics from './pages/Analytics'
 import DecompositionInfo from './pages/DecompositionInfo'
@@ -16,6 +17,7 @@ function App() {
     <BrowserRouter>
       <Navbar />
 
+      <ErrorBoundary>
       <Routes>
         <Route
           path="/"
@@ -47,6 +49,7 @@ function App() {
           element={<Navigate to="/predict" replace />}
         />
       </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }

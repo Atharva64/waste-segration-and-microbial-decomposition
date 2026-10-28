@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ImageUpload from '../components/ImageUpload'
 import WebcamCapture from '../components/WebcamCapture'
 import Results from './Results'
+import { isRequestCancelled } from '../services/api'
+import { predictImage } from '../services/wasteService'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -12,6 +14,12 @@ function Predict() {
   const [error, setError] = useState('')
   const [inputMode, setInputMode] = useState('upload')
   const [result, setResult] = useState(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analyzeError, setAnalyzeError] = useState('')
+  const abortRef = useRef(null)
+
+  // Cancel any in-flight request when leaving the page.
+  useEffect(() => () => abortRef.current?.abort(), [])
 
   useEffect(() => {
     if (!selectedFile) {
@@ -27,6 +35,7 @@ function Predict() {
 
   const handleFileSelect = (file) => {
     setError('')
+    setAnalyzeError('')
     setResult(null)
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -53,20 +62,46 @@ function Predict() {
     setSelectedFile(null)
     setResult(null)
     setError('')
+    setAnalyzeError('')
   }
 
-  const handleAnalyze = () => {
-    setResult({
-      predicted_class: 'biodegradable',
-      confidence: 0.93,
-      model_name: 'MobileNetV3Small',
-    })
+  const handleAnalyze = async () => {
+    if (!selectedFile || isAnalyzing) return
+
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setAnalyzeError('')
+    setIsAnalyzing(true)
+
+    try {
+      const data = await predictImage(selectedFile, {
+        signal: controller.signal,
+      })
+      setResult(data)
+    } catch (err) {
+      if (!isRequestCancelled(err)) {
+        setAnalyzeError(err.message)
+      }
+    } finally {
+      if (abortRef.current === controller) {
+        abortRef.current = null
+        setIsAnalyzing(false)
+      }
+    }
+  }
+
+  const handleCancelAnalyze = () => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    setIsAnalyzing(false)
   }
 
   const handleTryAnother = () => {
     setSelectedFile(null)
     setResult(null)
     setError('')
+    setAnalyzeError('')
     setInputMode('upload')
   }
 
@@ -139,18 +174,51 @@ function Predict() {
               )}
             </div>
 
+            {analyzeError && (
+              <p
+                role="alert"
+                className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+              >
+                {analyzeError}
+              </p>
+            )}
+
             <button
               type="button"
-              disabled={!selectedFile}
+              disabled={!selectedFile || isAnalyzing}
+              aria-busy={isAnalyzing}
               onClick={handleAnalyze}
-              className="mt-8 w-full rounded-2xl bg-green-600 px-6 py-4 text-base font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl bg-green-600 px-6 py-4 text-base font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              Analyze Waste
+              {isAnalyzing && (
+                <span
+                  aria-hidden="true"
+                  className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                />
+              )}
+              {isAnalyzing ? 'Analyzing…' : analyzeError ? 'Try again' : 'Analyze Waste'}
             </button>
 
-            <p className="mt-3 text-center text-xs text-slate-400">
-              The result is still temporary until the frontend API integration step.
-            </p>
+            {isAnalyzing ? (
+              <p
+                role="status"
+                className="mt-3 text-center text-xs text-slate-500"
+              >
+                The first analysis can take a few seconds while the model
+                loads.{' '}
+                <button
+                  type="button"
+                  onClick={handleCancelAnalyze}
+                  className="font-semibold text-slate-700 underline underline-offset-2"
+                >
+                  Cancel
+                </button>
+              </p>
+            ) : (
+              <p className="mt-3 text-center text-xs text-slate-400">
+                Results are saved to your prediction history.
+              </p>
+            )}
           </>
         )}
       </div>

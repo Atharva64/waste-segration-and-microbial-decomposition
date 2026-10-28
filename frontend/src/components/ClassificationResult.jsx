@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom'
+import FeedbackForm from './FeedbackForm'
+
 const CATEGORY_META = {
   biodegradable: {
     label: 'Biodegradable',
@@ -43,6 +46,12 @@ const CATEGORY_META = {
   },
 }
 
+const LOW_CONFIDENCE_THRESHOLD = 0.6
+
+function formatClassLabel(slug) {
+  return CATEGORY_META[slug]?.label ?? slug
+}
+
 function Flag({ active, label }) {
   return (
     <div
@@ -83,6 +92,12 @@ function ClassificationResult({
   }
 
   const confidencePercent = Math.round(result.confidence * 100)
+  const isLowConfidence = result.confidence < LOW_CONFIDENCE_THRESHOLD
+  const showDecompositionLink = categoryKey === 'biodegradable'
+
+  const topPredictions = Object.entries(result.probabilities ?? {})
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -146,6 +161,48 @@ function ClassificationResult({
             </div>
           </div>
 
+          {isLowConfidence && (
+            <p
+              role="status"
+              className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900"
+            >
+              The model is not very sure about this one. Try a clearer,
+              well-lit photo with a single item in the frame.
+            </p>
+          )}
+
+          {topPredictions.length > 1 && (
+            <div className="mt-5">
+              <p className="text-sm font-semibold text-slate-500">
+                Top predictions
+              </p>
+
+              <ul className="mt-2 space-y-2">
+                {topPredictions.map(([slug, probability]) => (
+                  <li
+                    key={slug}
+                    className="flex items-center gap-3 text-sm text-slate-700"
+                  >
+                    <span className="w-28 shrink-0 font-medium">
+                      {formatClassLabel(slug)}
+                    </span>
+
+                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                      <span
+                        className="block h-full rounded-full bg-green-500"
+                        style={{ width: `${Math.round(probability * 100)}%` }}
+                      />
+                    </span>
+
+                    <span className="w-10 text-right tabular-nums text-slate-500">
+                      {Math.round(probability * 100)}%
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <Flag
               active={meta.biodegradable}
@@ -168,11 +225,25 @@ function ClassificationResult({
             </p>
           </div>
 
-          {meta.biodegradable && (
+          {showDecompositionLink && (
             <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-              Biodegradable waste may have additional microbial decomposition
-              guidance available from the knowledge base.
+              Microbial decomposition guidance is available for biodegradable
+              waste.{' '}
+              <Link
+                to="/decomposition"
+                className="font-bold underline underline-offset-2 hover:text-amber-950"
+              >
+                View decomposition guidance
+              </Link>
             </div>
+          )}
+
+          {result.prediction_id != null && (
+            <FeedbackForm
+              key={result.prediction_id}
+              predictionId={result.prediction_id}
+              predictedClass={categoryKey}
+            />
           )}
 
           <button

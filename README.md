@@ -338,6 +338,7 @@ Planned dashboard information:
 | GET | `/api/decomposition/{waste}` | Get decomposition information |
 | GET | `/api/predictions` | Prediction history |
 | POST | `/api/feedback` | Save user feedback |
+| GET | `/api/analytics/summary` | Dashboard statistics (totals, per-category, per-day, feedback) |
 
 ---
 
@@ -475,29 +476,29 @@ data/
 - [ ] Connect recommendations to classified waste
 
 ### Phase 4 — Backend
-- [ ] Create FastAPI project
-- [ ] Implement prediction API
-- [ ] Connect TensorFlow model
-- [ ] Configure PostgreSQL
-- [ ] Add prediction history
+- [x] Create FastAPI project
+- [x] Implement prediction API
+- [x] Connect TensorFlow model
+- [x] Configure PostgreSQL
+- [x] Add prediction history
 - [ ] Add recommendation endpoints
-- [ ] Add validation and error handling
+- [x] Add validation and error handling
 
 ### Phase 5 — Frontend
-- [ ] Create React + Vite application
-- [ ] Configure Tailwind CSS
-- [ ] Build image-upload page
-- [ ] Add webcam capture
-- [ ] Build result page
-- [ ] Add waste guide
-- [ ] Add decomposition-information page
-- [ ] Build analytics dashboard
+- [x] Create React + Vite application
+- [x] Configure Tailwind CSS
+- [x] Build image-upload page
+- [x] Add webcam capture
+- [x] Build result page
+- [x] Add waste guide
+- [x] Add decomposition-information page
+- [x] Build analytics dashboard
 
 ### Phase 6 — Advanced Features
 - [ ] Grad-CAM explainability
-- [ ] Prediction history
-- [ ] Feedback system
-- [ ] Dashboard charts
+- [x] Prediction history
+- [x] Feedback system
+- [x] Dashboard charts
 - [ ] Model comparison
 - [ ] Real-time/webcam classification
 
@@ -576,23 +577,49 @@ pip install matplotlib==3.11.2
 ### 4. Install Backend Dependencies
 
 ```bash
-pip install fastapi==0.141.1
-pip install uvicorn==0.53.0
-pip install sqlalchemy==2.0.54
-pip install "psycopg[binary]==3.3.5"
+pip install -r backend/requirements-dev.txt
 ```
 
 ---
 
-### 5. Frontend Setup
+### 5. Configure and Initialise the Database
 
 ```bash
-npm create vite@latest frontend -- --template react
+cp .env.example .env          # then set your own DB_PASSWORD
+psql -U postgres -d waste_management -f database/schema.sql
+psql -U postgres -d waste_management -f database/seed.sql
+python -m backend.app.database.init_db   # app tables + 6 waste categories
+```
+
+Place the trained model at `ai/models/waste_classifier_best.keras`
+(model files are git-ignored).
+
+---
+
+### 6. Run the Backend
+
+```bash
+uvicorn backend.app.main:app --reload
+```
+
+API docs: http://127.0.0.1:8000/docs
+
+Run the tests with `pytest`.
+
+---
+
+### 7. Run the Frontend
+
+```bash
 cd frontend
 npm install
-npm install tailwindcss axios recharts
 npm run dev
 ```
+
+Open http://localhost:5173. The Vite dev server proxies `/api` and `/health`
+to the backend on port 8000, so no extra configuration is needed. For a
+production build, set `VITE_API_BASE_URL` (see `frontend/.env.example`) and
+add that site's origin to `CORS_ORIGINS` in the backend `.env`.
 
 ---
 

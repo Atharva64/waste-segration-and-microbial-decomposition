@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import useApiHealth from '../hooks/useApiHealth'
 
 const navItems = [
   { to: '/predict', label: 'Classify' },
@@ -7,7 +8,16 @@ const navItems = [
   { to: '/analytics', label: 'Analytics' },
 ]
 
+const STATUS_STYLES = {
+  checking: { dot: 'bg-slate-400', label: 'Checking API…' },
+  online: { dot: 'bg-green-500', label: 'API online' },
+  offline: { dot: 'bg-red-500', label: 'API offline' },
+}
+
 function Navbar() {
+  const apiStatus = useApiHealth()
+  const statusStyle = STATUS_STYLES[apiStatus]
+
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -38,6 +48,17 @@ function Navbar() {
             </NavLink>
           ))}
         </nav>
+
+        <p
+          role="status"
+          className="flex items-center gap-2 text-xs font-semibold text-slate-500"
+        >
+          <span
+            aria-hidden="true"
+            className={`h-2.5 w-2.5 rounded-full ${statusStyle.dot}`}
+          />
+          {statusStyle.label}
+        </p>
       </div>
     </header>
   )
